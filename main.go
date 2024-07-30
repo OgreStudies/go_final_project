@@ -38,18 +38,19 @@ func main() {
 	addrString := ":" + config.TODOConfigPort()
 	fmt.Println(addrString)
 
-	http.HandleFunc("/api/nextdate", nextDateHandle)
-	http.HandleFunc("/api/task", auth(taskHandle))
-	http.HandleFunc("/api/tasks", auth(tasksHandle))
-	http.HandleFunc("/api/task/done", auth(tasksDoneHandle))
-	http.HandleFunc("/api/signin", signHandle)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/nextdate", nextDateHandle)
+	mux.HandleFunc("/api/task", auth(taskHandle))
+	mux.HandleFunc("/api/tasks", auth(tasksHandle))
+	mux.HandleFunc("/api/task/done", auth(tasksDoneHandle))
+	mux.HandleFunc("/api/signin", signHandle)
 
 	//Данная реализация файлового сервера предполагает, что клиент должен отсылать token всегда, включая запрос файйлов
 	//Однако реализация тестов финального задания не предполагает такого поведения
 	//hfs := http.FileServer(http.Dir(webDir))
-	//http.HandleFunc("/", authHFS(hfs.ServeHTTP))
+	//mux.HandleFunc("/", authHFS(hfs.ServeHTTP))
 
-	http.Handle("/", http.FileServer(http.Dir(webDir)))
+	mux.Handle("/", http.FileServer(http.Dir(webDir)))
 
 	err = http.ListenAndServe(addrString, nil)
 	if err != nil {
