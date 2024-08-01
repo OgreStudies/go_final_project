@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"bytes"
@@ -6,14 +6,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/ogrestudies/go_final_project/config"
+	"github.com/ogrestudies/go_final_project/internal/config"
 )
 
 // Обработчик запросов на аутентификацию
-func signHandle(res http.ResponseWriter, req *http.Request) {
+func SignHandle(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	type authData struct {
 		Password string `json:"password"`
@@ -26,14 +27,20 @@ func signHandle(res http.ResponseWriter, req *http.Request) {
 	if err != nil {
 
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+		_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+		if err != nil {
+			log.Output(1, err.Error())
+		}
 		return
 	}
 	//Преобразование тела в данные ауткнтификации
 	if err = json.Unmarshal(buf.Bytes(), &newAuthData); err != nil {
 
 		res.WriteHeader(http.StatusBadRequest)
-		res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+		_, err := res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+		if err != nil {
+			log.Output(1, err.Error())
+		}
 		return
 	}
 
@@ -41,12 +48,18 @@ func signHandle(res http.ResponseWriter, req *http.Request) {
 	password := config.TODOPassword()
 	if len(password) == 0 { //пароль отсутствует - возвращаем пустой токен
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte(`{"token":""}`))
+		_, err = res.Write([]byte(`{"token":""}`))
+		if err != nil {
+			log.Output(1, err.Error())
+		}
 		return
 	} else { //пароль задан
 		if newAuthData.Password != password { //Пароли не совпадают
 			res.WriteHeader(http.StatusUnauthorized)
-			res.Write([]byte(`{"error": "Неверный пароль"}`))
+			_, err := res.Write([]byte(`{"error": "Неверный пароль"}`))
+			if err != nil {
+				log.Output(1, err.Error())
+			}
 			return
 		}
 	}
@@ -65,12 +78,18 @@ func signHandle(res http.ResponseWriter, req *http.Request) {
 	signedToken, err := jwtToken.SignedString([]byte(password))
 	if err != nil {
 		res.WriteHeader(http.StatusUnauthorized)
-		res.Write([]byte(`{"error": "Ошибка создания токена"}`))
+		_, err = res.Write([]byte(`{"error": "Ошибка создания токена"}`))
+		if err != nil {
+			log.Output(1, err.Error())
+		}
 		return
 	}
 
 	//Отправка токена клиенту
 	res.WriteHeader(http.StatusAccepted)
-	res.Write([]byte(fmt.Sprintf(`{"token": "%s"}`, signedToken)))
+	_, err = res.Write([]byte(fmt.Sprintf(`{"token": "%s"}`, signedToken)))
+	if err != nil {
+		log.Output(1, err.Error())
+	}
 
 }

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"crypto/sha256"
@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/ogrestudies/go_final_project/config"
+	"github.com/ogrestudies/go_final_project/internal/config"
 )
 
 // Проверяет полученный от клиента Token
@@ -50,7 +50,7 @@ func verifyToken(token string) bool {
 }
 
 // Проверка утентификации для запросов к API
-func auth(next http.HandlerFunc) http.HandlerFunc {
+func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// смотрим наличие пароля
 		pass := config.TODOPassword()
@@ -74,31 +74,3 @@ func auth(next http.HandlerFunc) http.HandlerFunc {
 		next(w, r)
 	})
 }
-
-// Проверка аутентификации для запросов к файловому серверу
-// Если токен неверный - переадресация на страницу с вводом пароля
-/*
-func authHFS(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// смотрим наличие пароля
-		pass := config.TODOPassword()
-
-		if len(pass) > 0 {
-			var jwt string // JWT-токен из куки
-			// получаем куку
-			cookie, err := r.Cookie("token")
-			if err == nil {
-				jwt = cookie.Value
-			}
-
-			// валидация и проверки JWT-токена
-			valid := verifyToken(jwt)
-			//Если валидация не прошла - редирект на страницу с логином
-			if !valid {
-				r.URL.Path = "/login.html"
-			}
-		}
-		next(w, r)
-	})
-}
-*/

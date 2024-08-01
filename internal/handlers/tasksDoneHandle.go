@@ -1,16 +1,17 @@
-package main
+package handlers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/ogrestudies/go_final_project/task"
+	"github.com/ogrestudies/go_final_project/internal/task"
 )
 
 // Обработчик запросов на выполнение задачи
-func tasksDoneHandle(res http.ResponseWriter, req *http.Request) {
+func TasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 
 	switch req.Method {
@@ -21,7 +22,10 @@ func tasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
-			res.Write([]byte(`{"error":"Ошибка идентификатора задачи"}`))
+			_, err = res.Write([]byte(`{"error":"Ошибка идентификатора задачи"}`))
+			if err != nil {
+				log.Output(1, err.Error())
+			}
 			return
 		}
 
@@ -30,7 +34,10 @@ func tasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			res.WriteHeader(http.StatusBadRequest)
 
-			res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			if err != nil {
+				log.Output(1, err.Error())
+			}
 			return
 		}
 
@@ -40,7 +47,10 @@ func tasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 
 			if err != nil {
 				res.WriteHeader(http.StatusInternalServerError)
-				res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+				_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+				if err != nil {
+					log.Output(1, err.Error())
+				}
 				return
 			}
 
@@ -48,7 +58,10 @@ func tasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 			storedTask.Date, err = task.NextDate(time.Now(), storedTask.Date, storedTask.Repeat)
 			if err != nil {
 				res.WriteHeader(http.StatusInternalServerError)
-				res.Write([]byte(fmt.Sprintf(`{"error":"ошибка вычисления новой даты события с id: %v"}`, taskId)))
+				_, err = res.Write([]byte(fmt.Sprintf(`{"error":"ошибка вычисления новой даты события с id: %v"}`, taskId)))
+				if err != nil {
+					log.Output(1, err.Error())
+				}
 				return
 			}
 
@@ -56,14 +69,20 @@ func tasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 
 			if err != nil {
 				res.WriteHeader(http.StatusInternalServerError)
-				res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+				_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+				if err != nil {
+					log.Output(1, err.Error())
+				}
 				return
 			}
 		}
 
 		//Успешное завершение
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte("{}"))
+		_, err = res.Write([]byte("{}"))
+		if err != nil {
+			log.Output(1, err.Error())
+		}
 		return
 
 	}

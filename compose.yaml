@@ -1,9 +1,11 @@
 services:
   server:
-    build: .
     env_file:
       - .env
+    build: 
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "7540:7540"
+      - ${PORT_MAPPING}
     volumes:
       - .:/usr/src/app

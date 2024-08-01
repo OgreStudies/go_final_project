@@ -1,12 +1,13 @@
-package main
+package handlers
 
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
-	"github.com/ogrestudies/go_final_project/config"
-	"github.com/ogrestudies/go_final_project/task"
+	"github.com/ogrestudies/go_final_project/internal/config"
+	"github.com/ogrestudies/go_final_project/internal/task"
 )
 
 type Tasks struct {
@@ -14,7 +15,7 @@ type Tasks struct {
 }
 
 // Обработчик запросов к списку задач
-func tasksHandle(res http.ResponseWriter, req *http.Request) {
+func TasksHandle(res http.ResponseWriter, req *http.Request) {
 	switch req.Method {
 	case "GET":
 		res.Header().Set("Content-Type", "application/json")
@@ -26,7 +27,10 @@ func tasksHandle(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 
 			res.WriteHeader(http.StatusInternalServerError)
-			res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			if err != nil {
+				log.Output(1, err.Error())
+			}
 			return
 		}
 
@@ -35,14 +39,20 @@ func tasksHandle(res http.ResponseWriter, req *http.Request) {
 		if err != nil {
 
 			res.WriteHeader(http.StatusInternalServerError)
-			res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
+			if err != nil {
+				log.Output(1, err.Error())
+			}
 			return
 		}
 		//Формирование заголовка
 
 		res.WriteHeader(http.StatusOK)
 		//Запись тела
-		res.Write(resp)
+		_, err = res.Write(resp)
+		if err != nil {
+			log.Output(1, err.Error())
+		}
 
 	}
 }

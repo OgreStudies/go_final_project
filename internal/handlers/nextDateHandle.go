@@ -1,13 +1,13 @@
-package main
+package handlers
 
 import (
 	"net/http"
 	"time"
 
-	"github.com/ogrestudies/go_final_project/task"
+	"github.com/ogrestudies/go_final_project/internal/task"
 )
 
-func nextDateHandle(res http.ResponseWriter, req *http.Request) {
+func NextDateHandle(res http.ResponseWriter, req *http.Request) {
 	date := req.FormValue("date")
 	repeat := req.FormValue("repeat")
 	now, _ := time.Parse(task.DateLayout, req.FormValue("now"))

@@ -4,8 +4,8 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN go mod tidy 
+RUN go mod download
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /go_final_project
+RUN go build -o /go_final_project ./cmd/TODOServer/todo_server.go
 
-CMD ["/go_final_project"] 
+CMD ["/go_final_project"]
