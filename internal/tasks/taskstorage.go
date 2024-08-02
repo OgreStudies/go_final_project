@@ -1,4 +1,4 @@
-package taskstorage
+package tasks
 
 import (
 	"database/sql"
@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ogrestudies/go_final_project/internal/task"
 	_ "modernc.org/sqlite"
 )
 
@@ -56,16 +55,17 @@ func OpenStorage(storagePath string) (*sql.DB, error) {
 
 // Структура - описание хранилища задач
 type TaskStorage struct {
-	db *sql.DB
+	db              *sql.DB
+	ReturnTaskLimit int
 }
 
 // Возвращает TaskStorage с заданным в `db` хранилищем
-func NewTaskstorage(db *sql.DB) TaskStorage {
-	return TaskStorage{db: db}
+func NewTaskstorage(db *sql.DB, retuntTaskLimit int) TaskStorage {
+	return TaskStorage{db: db, ReturnTaskLimit: retuntTaskLimit}
 }
 
 // Добавляет задачу в хранилище
-func (ts TaskStorage) AddTask(task task.Task) (int64, error) {
+func (ts TaskStorage) AddTask(task Task) (int64, error) {
 
 	//Проверка и коррекция задачи
 	checkedTask, err := task.TaskFieldCheckAndCorrect()
@@ -92,10 +92,10 @@ func (ts TaskStorage) AddTask(task task.Task) (int64, error) {
 
 }
 
-func (ts TaskStorage) GetTaskById(id int64) (task.Task, error) {
+func (ts TaskStorage) GetTaskById(id int64) (Task, error) {
 	sqlString := "SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id;"
 	pRow := ts.db.QueryRow(sqlString, sql.Named("id", id))
-	task := task.Task{}
+	task := Task{}
 	err := pRow.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 	if err != nil {
 		return task, fmt.Errorf("ошибка получения записи с id: %d: %w", id, err)
@@ -105,7 +105,7 @@ func (ts TaskStorage) GetTaskById(id int64) (task.Task, error) {
 }
 
 // Обновляет задачу в хранилище
-func (ts TaskStorage) UpdateTask(id int64, taskData *task.Task) (task.Task, error) {
+func (ts TaskStorage) UpdateTask(id int64, taskData *Task) (Task, error) {
 	//проверка наличия записи с требуемым id
 	storedtask, err := ts.GetTaskById(id)
 	if err != nil {
@@ -158,30 +158,30 @@ func (ts TaskStorage) DeleteTask(id int64) error {
 }
 
 // Получает ближайшие задачи. Количество ограничено параметром num
-func (ts TaskStorage) GetLastTasks(num int, searchReq string) ([]task.Task, error) {
+func (ts TaskStorage) GetLastTasks(searchReq string) ([]Task, error) {
 
-	tasks := make([]task.Task, 0, num)
+	tasks := make([]Task, 0, ts.ReturnTaskLimit)
 
 	var pRows *sql.Rows
 	var err error
 
 	if searchReq != "" { //Если поисковый запрос
 		sqlString := ""
-		t, parceErr := time.Parse(task.SearchLayout, searchReq)
+		t, parceErr := time.Parse(SearchLayout, searchReq)
 		if parceErr != nil { //Если не удалось преобразовать запрос в дату, то поисковый запрос по Title
-			sqlString = "SELECT * FROM scheduler WHERE title LIKE :searchReq ORDER BY date ASC LIMIT :maxlim;"
+			sqlString = "SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE :searchReq ORDER BY date ASC LIMIT :maxlim;"
 		} else { //Иначе поисковый запрос по дате
-			searchReq = t.Format(task.DateLayout) //Преобразование в формат базы данных
-			sqlString = "SELECT * FROM scheduler WHERE date LIKE :searchReq ORDER BY date ASC LIMIT :maxlim;"
+			searchReq = t.Format(DateLayout) //Преобразование в формат базы данных
+			sqlString = "SELECT id, date, title, comment, repeat FROM scheduler WHERE date LIKE :searchReq ORDER BY date ASC LIMIT :maxlim;"
 		}
 		searchReq = "%" + searchReq + "%"
 		pRows, err = ts.db.Query(sqlString,
 			sql.Named("searchReq", searchReq),
-			sql.Named("maxlim", num),
+			sql.Named("maxlim", ts.ReturnTaskLimit),
 		)
 	} else { //Не поисковый запрос
-		pRows, err = ts.db.Query("SELECT * FROM scheduler ORDER BY date ASC LIMIT :maxlim;",
-			sql.Named("maxlim", num),
+		pRows, err = ts.db.Query("SELECT id, date, title, comment, repeat FROM scheduler ORDER BY date ASC LIMIT :maxlim;",
+			sql.Named("maxlim", ts.ReturnTaskLimit),
 		)
 	}
 	if err != nil {
@@ -191,7 +191,7 @@ func (ts TaskStorage) GetLastTasks(num int, searchReq string) ([]task.Task, erro
 	defer pRows.Close()
 	// заполняем срез Tasks данными из таблицы
 	for pRows.Next() {
-		var task task.Task
+		var task Task
 		err := pRows.Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
 		if err != nil {
 			return tasks, err

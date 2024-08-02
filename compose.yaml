@@ -6,6 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - ${PORT_MAPPING}
+      - "${TODO_PORT}:${TODO_PORT}"
     volumes:
       - .:/usr/src/app

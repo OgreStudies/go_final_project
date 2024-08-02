@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ogrestudies/go_final_project/internal/task"
+	"github.com/ogrestudies/go_final_project/internal/tasks"
 )
 
 // Обработчик запросов на выполнение задачи
@@ -55,7 +55,7 @@ func TasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 			}
 
 		} else { //Если правило повторения не пустое - перенести задачу на следующую дату выполнения
-			storedTask.Date, err = task.NextDate(time.Now(), storedTask.Date, storedTask.Repeat)
+			storedTask.Date, err = tasks.NextDate(time.Now(), storedTask.Date, storedTask.Repeat)
 			if err != nil {
 				res.WriteHeader(http.StatusInternalServerError)
 				_, err = res.Write([]byte(fmt.Sprintf(`{"error":"ошибка вычисления новой даты события с id: %v"}`, taskId)))

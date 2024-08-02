@@ -57,7 +57,6 @@ var Token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjaGVja3N1bSI6IjdiMDgzOGMyYW
 Используется Docker Compose.
 
 Файл .env:
-PORT_MAPPING="7540:7540"
 TODO_PORT=7540 
 TODO_DBFILE=scheduler.db
 TODO_TASK_LIST_MAX=50
@@ -66,9 +65,8 @@ CGO_ENABLED=0
 GOOS=linux 
 GOARCH=amd64
 
-При необходимости изменения порта сервера необходимо изменить значение TODO_PORT.
-Для изменения маппинга портов необходимо задать значение переменной PORT_MAPPING следующим образом: "HOST_PORT:CONTAINER_PORT"
-HOST_PORT - порт через который приложение будет доступно с хоста
-CONTAINER_PORT - данное значение должно быть равным TODO_PORT
+При необходимости изменения порта сервера необходимо изменить значение TODO_PORT в файле .env
+По этому порту сервер будет доступен на хостовой машине
+
 
 Для сборки и запуска контейнера необходимо выполнить команду `docker compose up`. При этом файл базы данных задачь будет создан в катлоге проекта.

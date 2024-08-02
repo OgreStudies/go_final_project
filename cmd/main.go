@@ -8,7 +8,7 @@ import (
 
 	"github.com/ogrestudies/go_final_project/internal/config"
 	"github.com/ogrestudies/go_final_project/internal/handlers"
-	"github.com/ogrestudies/go_final_project/internal/taskstorage"
+	"github.com/ogrestudies/go_final_project/internal/tasks"
 )
 
 func main() {
@@ -22,14 +22,14 @@ func main() {
 	log.SetOutput(file)
 
 	//Подключение к хранилищу задач
-	db, err := taskstorage.OpenStorage(config.TODODb())
+	db, err := tasks.OpenStorage(config.TODODb())
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
 	//Установка ссылки на хранилище для 'handlers'
-	todoStorage := taskstorage.NewTaskstorage(db)
+	todoStorage := tasks.NewTaskstorage(db, config.TODOTaskListMAX())
 	handlers.SetStorage(&todoStorage)
 
 	//Запуск сервера

@@ -6,13 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ogrestudies/go_final_project/internal/config"
-	"github.com/ogrestudies/go_final_project/internal/task"
+	"github.com/ogrestudies/go_final_project/internal/tasks"
 )
-
-type Tasks struct {
-	Tasks []task.Task `json:"tasks"`
-}
 
 // Обработчик запросов к списку задач
 func TasksHandle(res http.ResponseWriter, req *http.Request) {
@@ -20,9 +15,9 @@ func TasksHandle(res http.ResponseWriter, req *http.Request) {
 	case "GET":
 		res.Header().Set("Content-Type", "application/json")
 		//Список ближайших задач
-		var tasks Tasks
+		var tasks tasks.Tasks
 		var err error
-		tasks.Tasks, err = todoStorage.GetLastTasks(config.TODOTaskListMAX(), req.FormValue("search"))
+		tasks.Tasks, err = todoStorage.GetLastTasks(req.FormValue("search"))
 
 		if err != nil {
 

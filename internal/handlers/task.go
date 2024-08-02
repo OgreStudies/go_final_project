@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ogrestudies/go_final_project/internal/task"
+	"github.com/ogrestudies/go_final_project/internal/tasks"
 )
 
 // Обработчик запросов на манипуляцию с отдельной задачей
@@ -59,7 +59,7 @@ func TaskHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	case "PUT": //Обновить задачу
 		res.Header().Set("Content-Type", "application/json")
-		var taskData task.Task
+		var taskData tasks.Task
 		var buf bytes.Buffer
 		//Чтение тела
 		_, err := buf.ReadFrom(req.Body)
@@ -114,7 +114,7 @@ func TaskHandle(res http.ResponseWriter, req *http.Request) {
 
 	case "POST": //Добавить задачу
 		res.Header().Set("Content-Type", "application/json")
-		var newTask task.Task
+		var newTask tasks.Task
 		var buf bytes.Buffer
 		//Чтение тела
 		_, err := buf.ReadFrom(req.Body)

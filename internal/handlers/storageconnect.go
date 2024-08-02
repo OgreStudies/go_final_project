@@ -1,9 +1,9 @@
 package handlers
 
-import "github.com/ogrestudies/go_final_project/internal/taskstorage"
+import "github.com/ogrestudies/go_final_project/internal/tasks"
 
-var todoStorage *taskstorage.TaskStorage
+var todoStorage *tasks.TaskStorage
 
-func SetStorage(storage *taskstorage.TaskStorage) {
+func SetStorage(storage *tasks.TaskStorage) {
 	todoStorage = storage
 }
