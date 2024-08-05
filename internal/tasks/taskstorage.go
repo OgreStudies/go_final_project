@@ -65,25 +65,22 @@ func NewTaskstorage(db *sql.DB, retuntTaskLimit int) TaskStorage {
 }
 
 // Добавляет задачу в хранилище
-func (ts TaskStorage) AddTask(task Task) (int64, error) {
+func (ts TaskStorage) AddTask(task *Task) (int64, error) {
 
-	//Проверка и коррекция задачи
-	checkedTask, err := task.TaskFieldCheckAndCorrect()
-	if err != nil {
-		return 0, err
+	if task == nil {
+		return 0, fmt.Errorf("указатель task не может быть nil")
 	}
 
 	//Добавление новой задачи в базу
 	dbres, err := ts.db.Exec("INSERT INTO scheduler(date, title, comment, repeat) VALUES (:date, :title, :comment, :repeat)",
-		sql.Named("date", checkedTask.Date),
-		sql.Named("title", checkedTask.Title),
-		sql.Named("comment", checkedTask.Comment),
-		sql.Named("repeat", checkedTask.Repeat),
+		sql.Named("date", task.Date),
+		sql.Named("title", task.Title),
+		sql.Named("comment", task.Comment),
+		sql.Named("repeat", task.Repeat),
 	)
 
 	if err != nil {
 		return 0, fmt.Errorf("ошибка добавления записи: %w", err)
-
 	}
 
 	//Идентификатор добвленной задачи
@@ -105,53 +102,49 @@ func (ts TaskStorage) GetTaskById(id int64) (Task, error) {
 }
 
 // Обновляет задачу в хранилище
-func (ts TaskStorage) UpdateTask(id int64, taskData *Task) (Task, error) {
-	//проверка наличия записи с требуемым id
-	storedtask, err := ts.GetTaskById(id)
-	if err != nil {
-		return storedtask, fmt.Errorf("запись с id: %v не найдена", id)
+func (ts TaskStorage) UpdateTask(id int64, taskData *Task) error {
+
+	if taskData == nil {
+		return fmt.Errorf("указатель taskData не может быть nil")
 	}
 
-	//Проверка и коррекция данных для обновления
-	checkedTask, err := taskData.TaskFieldCheckAndCorrect()
-	if err != nil {
-		return checkedTask, fmt.Errorf("запись с id: %v ошибка формата данных для обновления: %w", id, err)
-	}
 	//Добавление идентификатора
-	checkedTask.ID = fmt.Sprintf("%d", id)
+	taskData.ID = fmt.Sprintf("%d", id)
 
 	//Если запись найдена - обновить её
 	sqlString := "UPDATE scheduler SET date = :date, title = :title, comment = :comment, repeat = :repeat  WHERE id = :id"
-	_, err = ts.db.Exec(sqlString,
+	res, err := ts.db.Exec(sqlString,
 		sql.Named("id", id),
-		sql.Named("date", checkedTask.Date),
-		sql.Named("title", checkedTask.Title),
-		sql.Named("comment", checkedTask.Comment),
-		sql.Named("repeat", checkedTask.Repeat),
+		sql.Named("date", taskData.Date),
+		sql.Named("title", taskData.Title),
+		sql.Named("comment", taskData.Comment),
+		sql.Named("repeat", taskData.Repeat),
 	)
 
 	if err != nil {
 
-		return checkedTask, err
+		return err
 	}
 
-	return checkedTask, nil
+	if nrows, err := res.RowsAffected(); nrows == 0 && err == nil {
+		return fmt.Errorf("запись с id: %v не найдена", id)
+	}
+
+	return nil
 }
 
 // Удалаяет задачу из хранилища
 func (ts TaskStorage) DeleteTask(id int64) error {
-	//проверка наличия записи с требуемым id
-	_, err := ts.GetTaskById(id)
-	if err != nil {
-		return fmt.Errorf("запись с id: %v не найдена", id)
-	}
-
 	//Удаление записи если она найдена
 	sqlString := "DELETE FROM scheduler WHERE id = :id;"
-	_, err = ts.db.Exec(sqlString, sql.Named("id", id))
+	res, err := ts.db.Exec(sqlString, sql.Named("id", id))
 	if err != nil {
 
 		return fmt.Errorf("ошибка удаления записи с id: %v : %w", id, err)
+	}
+
+	if nrows, err := res.RowsAffected(); nrows == 0 && err == nil {
+		return fmt.Errorf("запись с id: %v не найдена", id)
 	}
 
 	return nil
@@ -169,7 +162,7 @@ func (ts TaskStorage) GetLastTasks(searchReq string) ([]Task, error) {
 		sqlString := ""
 		t, parceErr := time.Parse(SearchLayout, searchReq)
 		if parceErr != nil { //Если не удалось преобразовать запрос в дату, то поисковый запрос по Title
-			sqlString = "SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE :searchReq ORDER BY date ASC LIMIT :maxlim;"
+			sqlString = "SELECT id, date, title, comment, repeat FROM scheduler WHERE title LIKE :searchReq OR comment LIKE :searchReq ORDER BY date ASC LIMIT :maxlim;"
 		} else { //Иначе поисковый запрос по дате
 			searchReq = t.Format(DateLayout) //Преобразование в формат базы данных
 			sqlString = "SELECT id, date, title, comment, repeat FROM scheduler WHERE date LIKE :searchReq ORDER BY date ASC LIMIT :maxlim;"

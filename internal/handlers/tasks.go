@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -18,26 +17,13 @@ func TasksHandle(res http.ResponseWriter, req *http.Request) {
 		var tasks tasks.Tasks
 		var err error
 		tasks.Tasks, err = todoStorage.GetLastTasks(req.FormValue("search"))
-
-		if err != nil {
-
-			res.WriteHeader(http.StatusInternalServerError)
-			_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
-			if err != nil {
-				log.Output(1, err.Error())
-			}
+		if errResponceIfError(err, res, http.StatusInternalServerError, "") {
 			return
 		}
 
 		//Преобразование tasks в json
 		resp, err := json.Marshal(&tasks)
-		if err != nil {
-
-			res.WriteHeader(http.StatusInternalServerError)
-			_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
-			if err != nil {
-				log.Output(1, err.Error())
-			}
+		if errResponceIfError(err, res, http.StatusInternalServerError, "") {
 			return
 		}
 		//Формирование заголовка

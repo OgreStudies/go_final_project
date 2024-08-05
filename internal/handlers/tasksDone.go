@@ -19,60 +19,37 @@ func TasksDoneHandle(res http.ResponseWriter, req *http.Request) {
 
 		taskIdReq := req.FormValue("id")
 		taskId, err := strconv.ParseInt(taskIdReq, 10, 64)
-
-		if err != nil {
-			res.WriteHeader(http.StatusBadRequest)
-			_, err = res.Write([]byte(`{"error":"Ошибка идентификатора задачи"}`))
-			if err != nil {
-				log.Output(1, err.Error())
-			}
+		if errResponceIfError(err, res, http.StatusBadRequest, "ошибка идентификатора задачи") {
 			return
 		}
 
 		storedTask, err := todoStorage.GetTaskById(taskId)
-
-		if err != nil {
-			res.WriteHeader(http.StatusBadRequest)
-
-			_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
-			if err != nil {
-				log.Output(1, err.Error())
-			}
+		if errResponceIfError(err, res, http.StatusBadRequest, "") {
 			return
 		}
 
 		//Если правило повторения пустое - удалить задачу
 		if storedTask.Repeat == "" {
 			err = todoStorage.DeleteTask(taskId)
-
-			if err != nil {
-				res.WriteHeader(http.StatusInternalServerError)
-				_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
-				if err != nil {
-					log.Output(1, err.Error())
-				}
+			if errResponceIfError(err, res, http.StatusInternalServerError, "") {
 				return
 			}
 
 		} else { //Если правило повторения не пустое - перенести задачу на следующую дату выполнения
 			storedTask.Date, err = tasks.NextDate(time.Now(), storedTask.Date, storedTask.Repeat)
-			if err != nil {
-				res.WriteHeader(http.StatusInternalServerError)
-				_, err = res.Write([]byte(fmt.Sprintf(`{"error":"ошибка вычисления новой даты события с id: %v"}`, taskId)))
-				if err != nil {
-					log.Output(1, err.Error())
-				}
+			if errResponceIfError(err, res, http.StatusInternalServerError, fmt.Sprintf("ошибка вычисления новой даты события с id: %v", taskId)) {
 				return
 			}
 
-			_, err = todoStorage.UpdateTask(taskId, &storedTask)
-
+			//Проверка и коррекция данных для обновления
+			checkedTask, err := storedTask.TaskFieldCheckAndCorrect()
 			if err != nil {
-				res.WriteHeader(http.StatusInternalServerError)
-				_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
-				if err != nil {
-					log.Output(1, err.Error())
-				}
+				errResponceIfError(fmt.Errorf("запись с id: %v ошибка формата данных для обновления: %w", checkedTask.ID, err), res, http.StatusInternalServerError, "")
+				return
+			}
+
+			err = todoStorage.UpdateTask(taskId, &checkedTask)
+			if errResponceIfError(err, res, http.StatusInternalServerError, "") {
 				return
 			}
 		}

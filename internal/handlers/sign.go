@@ -24,23 +24,14 @@ func SignHandle(res http.ResponseWriter, req *http.Request) {
 	var buf bytes.Buffer
 	//Чтение тела
 	_, err := buf.ReadFrom(req.Body)
-	if err != nil {
 
-		res.WriteHeader(http.StatusBadRequest)
-		_, err = res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
-		if err != nil {
-			log.Output(1, err.Error())
-		}
+	if errResponceIfError(err, res, http.StatusBadRequest, "") {
 		return
 	}
-	//Преобразование тела в данные ауткнтификации
-	if err = json.Unmarshal(buf.Bytes(), &newAuthData); err != nil {
 
-		res.WriteHeader(http.StatusBadRequest)
-		_, err := res.Write([]byte(fmt.Sprintf(`{"error":"%s"}`, err.Error())))
-		if err != nil {
-			log.Output(1, err.Error())
-		}
+	//Преобразование тела в данные ауткнтификации
+	err = json.Unmarshal(buf.Bytes(), &newAuthData)
+	if errResponceIfError(err, res, http.StatusBadRequest, "") {
 		return
 	}
 
@@ -55,11 +46,7 @@ func SignHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	} else { //пароль задан
 		if newAuthData.Password != password { //Пароли не совпадают
-			res.WriteHeader(http.StatusUnauthorized)
-			_, err := res.Write([]byte(`{"error": "Неверный пароль"}`))
-			if err != nil {
-				log.Output(1, err.Error())
-			}
+			errResponceIfError(fmt.Errorf("неверный пароль"), res, http.StatusUnauthorized, "")
 			return
 		}
 	}
@@ -76,12 +63,7 @@ func SignHandle(res http.ResponseWriter, req *http.Request) {
 
 	// получаем подписанный токен
 	signedToken, err := jwtToken.SignedString([]byte(password))
-	if err != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		_, err = res.Write([]byte(`{"error": "Ошибка создания токена"}`))
-		if err != nil {
-			log.Output(1, err.Error())
-		}
+	if errResponceIfError(err, res, http.StatusUnauthorized, "ошибка создания токена") {
 		return
 	}
 
