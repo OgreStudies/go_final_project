@@ -16,6 +16,7 @@ import (
 func getURL(path string) string {
 	port := Port
 	envPort := os.Getenv("TODO_PORT")
+
 	if len(envPort) > 0 {
 		if eport, err := strconv.ParseInt(envPort, 10, 32); err == nil {
 			port = int(eport)

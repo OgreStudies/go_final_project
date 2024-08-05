@@ -1,0 +1,11 @@
+services:
+  server:
+    env_file:
+      - .env
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${TODO_PORT}:${TODO_PORT}"
+    volumes:
+      - .:/usr/src/app
